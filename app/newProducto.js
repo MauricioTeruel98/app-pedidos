@@ -49,7 +49,7 @@ export default function NewProducto() {
                         placeholder="Ingrese el nombre"
                     />
 
-                    <Text style={styles.label}>Email</Text>
+                    <Text style={styles.label}>Precio</Text>
                     <TextInput
                         style={styles.input}
                         value={price}

@@ -1,5 +1,5 @@
-import Main from "../../components/Main"
+import ClientsList from "../../components/ClientsList"
 
 export default function ClientesList() {
-    return <Main />
+    return <ClientsList />
 }

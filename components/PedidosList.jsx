@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TextInput, StyleSheet, Pressable, ActivityIndicator, ScrollView } from 'react-native';
-import { getAllPedidos, getAllProducts } from '../libs/supabase'; // Ajusta la ruta según la ubicación de tu archivo supabase.js
+import { View, Text, FlatList, TextInput, StyleSheet, Pressable, ActivityIndicator, Modal, Button } from 'react-native';
+import { getAllPedidos } from '../libs/supabase'; // Ajusta la ruta según la ubicación de tu archivo supabase.js
 import { Screen } from '../components/Screen';
 import { Stack, useRouter } from 'expo-router';
 import { styled } from "nativewind";
 import { formatPrice } from '../helpers/formatPrice';
 import { formatDate } from '../helpers/formatDate';
+import { CheckIcon, WarningIcon } from './Icons';
 
 const StyledPressable = styled(Pressable);
 
@@ -15,6 +16,8 @@ export default function PedidosList() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [search, setSearch] = useState('');
+    const [modalVisible, setModalVisible] = useState(false);
+    const [selectedPedido, setSelectedPedido] = useState(null);
 
     const router = useRouter();
 
@@ -44,6 +47,20 @@ export default function PedidosList() {
 
     const handleDetail = (pedidoId) => {
         router.push(`/pedidos/${pedidoId}`);
+    };
+
+    const handleChangeState = (pedido) => {
+        setSelectedPedido(pedido);
+        setModalVisible(true);
+    };
+
+    const confirmChangeState = (newState) => {
+        // Aquí puedes implementar la lógica para cambiar el estado del pedido
+        // Por ejemplo, puedes actualizar el estado en tu base de datos
+
+        // Luego, cierra el modal y resetea el pedido seleccionado
+        setModalVisible(false);
+        setSelectedPedido(null);
     };
 
     if (loading) {
@@ -84,13 +101,34 @@ export default function PedidosList() {
                     keyExtractor={(item) => item.id.toString()}
                     renderItem={({ item }) => (
                         <View style={styles.productCard}>
+                            {
+                                item.status === 0 && (
+                                    <StyledPressable onPress={() => handleChangeState(item)} className='flex-row items-center gap-1 justify-end'>
+                                        <WarningIcon size={20} color={'orange'} />
+                                        <Text className="text-amber-500 text-xl">
+                                            Pendiente
+                                        </Text>
+                                    </StyledPressable>
+                                )
+                            }
+
+                            {
+                                item.status === 1 && (
+                                    <StyledPressable onPress={() => handleChangeState(item)} className='flex-row items-center gap-1 justify-end'>
+                                        <CheckIcon size={20} color={'green'} />
+                                        <Text className="text-green-500 text-xl">
+                                            Entregado
+                                        </Text>
+                                    </StyledPressable>
+                                )
+                            }
                             <Text style={styles.productName}>{item.clients.name}</Text>
                             <View className="flex-row">
                                 <Text style={styles.productLabel}>Fecha:</Text>
                                 <Text style={styles.productName}> {formatDate(item.created_at)}</Text>
                             </View>
                             <View className="flex-row">
-                            <Text style={styles.productLabel}>Total:</Text>
+                                <Text style={styles.productLabel}>Total:</Text>
                                 <Text style={styles.productDescription}> {formatPrice(item.total)}</Text>
                             </View>
                             <StyledPressable onPress={() => handleDetail(item.id)} className="mt-2 px-4 py-2 bg-blue-500 rounded-md">
@@ -100,6 +138,38 @@ export default function PedidosList() {
                     )}
                 />
             </View>
+            {selectedPedido && (
+                <Modal
+                    animationType="slide"
+                    transparent={true}
+                    visible={modalVisible}
+                    onRequestClose={() => {
+                        setModalVisible(!modalVisible);
+                    }}
+                >
+                    <View style={styles.modalView}>
+                        <Text style={styles.modalText}>Cambiar estado del pedido</Text>
+                        {selectedPedido.status === 0 ? (
+                            <StyledPressable className='bg-green-500 px-4 py-2 rounded active:bg-green-600' onPress={() => confirmChangeState(1)}>
+                                <Text className="text-white">
+                                    Marcar como Entregado
+                                </Text>
+                            </StyledPressable>
+                        ) : (
+                            <StyledPressable className='bg-amber-500 px-4 py-2 rounded active:bg-amber-600' onPress={() => confirmChangeState(0)}>
+                                <Text>
+                                    Marcar como Pendiente
+                                </Text>
+                            </StyledPressable>
+                        )}
+                        <StyledPressable className='bg-red-500 px-4 py-2 rounded active:bg-red-600 mt-3' onPress={() => setModalVisible(false)}>
+                            <Text className="text-white">
+                                Cancelar
+                            </Text>
+                        </StyledPressable>
+                    </View>
+                </Modal>
+            )}
         </Screen>
     )
 }
@@ -146,4 +216,25 @@ const styles = StyleSheet.create({
         color: 'white',
         textAlign: 'center',
     },
+    modalView: {
+        margin: 20,
+        backgroundColor: "white",
+        borderRadius: 20,
+        padding: 35,
+        alignItems: "center",
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 2
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5
+    },
+    modalText: {
+        marginBottom: 15,
+        textAlign: "center",
+        fontSize: 18,
+        fontWeight: "bold"
+    }
 });

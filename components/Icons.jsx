@@ -38,3 +38,11 @@ export const List = (props) => (
 export const UserPlusIcon = (props) => (
     <FontAwesome name="user-plus" size={32} color="white" {...props} />
 );
+
+export const WarningIcon = (props) => (
+    <FontAwesome name="warning" size={32} color="white" {...props} />
+);
+
+export const CheckIcon = (props) => (
+    <FontAwesome name="check" size={32} color="white" {...props} />
+);

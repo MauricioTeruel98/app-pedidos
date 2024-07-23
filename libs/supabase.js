@@ -22,6 +22,7 @@ export async function getAllPedidos() {
             cliente_id,
             created_at,
             total,
+            status,
             clients (name)
         `)
         .order('created_at', { ascending: false });
@@ -152,7 +153,8 @@ export const createOrder = async (orderData) => {
         pedido_id: orderId,
         product_id: product.productId,
         quantity: product.quantity,
-        price_unit: product.price
+        price_unit: product.price,
+        status: 0
     }));
 
     const { error: orderProductsError } = await supabase

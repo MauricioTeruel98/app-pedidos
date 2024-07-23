@@ -4,6 +4,7 @@ import { ActivityIndicator, FlatList, ScrollView, StyleSheet, Text, View } from 
 import { useEffect, useState } from "react";
 import { getPedidoById, getProductsPedido } from "../../libs/supabase";
 import { formatPrice } from "../../helpers/formatPrice";
+import { CheckIcon, WarningIcon } from "../../components/Icons";
 
 export default function PedidoDetalle() {
     const { pedidoId } = useLocalSearchParams();
@@ -48,6 +49,27 @@ export default function PedidoDetalle() {
             />
             <View>
                 <Text className="text-2xl text-center">Pedido #{pedido.id}</Text>
+                {
+                    pedido.status === 0 && (
+                        <View className='flex-row items-center gap-1 justify-end'>
+                            <WarningIcon size={20} color={'orange'} />
+                            <Text className="text-amber-500 text-xl">
+                                Pendiente
+                            </Text>
+                        </View>
+                    )
+                }
+
+                {
+                    pedido.status === 1 && (
+                        <View className='flex-row items-center gap-1 justify-end'>
+                            <CheckIcon size={20} color={'green'} />
+                            <Text className="text-green-500 text-xl">
+                                Entregado
+                            </Text>
+                        </View>
+                    )
+                }
                 <View className="pb-5 mb-5 border-b border-slate-700">
                     <View className="flex-row">
                         <Text className="text-lg">Cliente:</Text>
