@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TextInput, StyleSheet, Pressable, ActivityIndicator, Modal, Button } from 'react-native';
-import { getAllPedidos } from '../libs/supabase'; // Ajusta la ruta según la ubicación de tu archivo supabase.js
+import { getAllPedidos, updateStatus, updateStatusPedido } from '../libs/supabase'; // Ajusta la ruta según la ubicación de tu archivo supabase.js
 import { Screen } from '../components/Screen';
 import { Stack, useRouter } from 'expo-router';
 import { styled } from "nativewind";
@@ -35,7 +35,7 @@ export default function PedidosList() {
         };
 
         fetchProducts();
-    }, []);
+    }, [pedidos]);
 
     const handleSearch = (text) => {
         setSearch(text);
@@ -54,11 +54,12 @@ export default function PedidosList() {
         setModalVisible(true);
     };
 
-    const confirmChangeState = (newState) => {
-        // Aquí puedes implementar la lógica para cambiar el estado del pedido
-        // Por ejemplo, puedes actualizar el estado en tu base de datos
-
-        // Luego, cierra el modal y resetea el pedido seleccionado
+    const confirmChangeState = async (status, pedido) => {
+        try {
+            await updateStatusPedido(pedido.id, { status });
+        } catch (error) {
+            console.error('Error updating client:', error);
+        }
         setModalVisible(false);
         setSelectedPedido(null);
     };
@@ -88,14 +89,16 @@ export default function PedidosList() {
                     headerRight: () => { }
                 }}
             />
-            <View>
-                <Text style={styles.title}>Listado de pedidos</Text>
-                <TextInput
-                    style={styles.searchInput}
-                    value={search}
-                    onChangeText={handleSearch}
-                    placeholder="Buscar pedidos..."
-                />
+            <View className="mb-28">
+                <View>
+                    <Text style={styles.title}>Listado de pedidos</Text>
+                    <TextInput
+                        style={styles.searchInput}
+                        value={search}
+                        onChangeText={handleSearch}
+                        placeholder="Buscar pedidos..."
+                    />
+                </View>
                 <FlatList
                     data={filteredPedidos}
                     keyExtractor={(item) => item.id.toString()}
@@ -147,26 +150,28 @@ export default function PedidosList() {
                         setModalVisible(!modalVisible);
                     }}
                 >
-                    <View style={styles.modalView}>
-                        <Text style={styles.modalText}>Cambiar estado del pedido</Text>
-                        {selectedPedido.status === 0 ? (
-                            <StyledPressable className='bg-green-500 px-4 py-2 rounded active:bg-green-600' onPress={() => confirmChangeState(1)}>
+                    <View style={styles.modalBackground}>
+                        <View style={styles.modalView}>
+                            <Text style={styles.modalText}>Cambiar estado del pedido</Text>
+                            {selectedPedido.status === 0 ? (
+                                <StyledPressable className='bg-green-500 px-4 py-2 rounded active:bg-green-600' onPress={() => confirmChangeState(1, selectedPedido)}>
+                                    <Text className="text-white">
+                                        Marcar como Entregado
+                                    </Text>
+                                </StyledPressable>
+                            ) : (
+                                <StyledPressable className='bg-amber-500 px-4 py-2 rounded active:bg-amber-600' onPress={() => confirmChangeState(0, selectedPedido)}>
+                                    <Text>
+                                        Marcar como Pendiente
+                                    </Text>
+                                </StyledPressable>
+                            )}
+                            <StyledPressable className='bg-red-500 px-4 py-2 rounded active:bg-red-600 mt-3' onPress={() => setModalVisible(false)}>
                                 <Text className="text-white">
-                                    Marcar como Entregado
+                                    Cancelar
                                 </Text>
                             </StyledPressable>
-                        ) : (
-                            <StyledPressable className='bg-amber-500 px-4 py-2 rounded active:bg-amber-600' onPress={() => confirmChangeState(0)}>
-                                <Text>
-                                    Marcar como Pendiente
-                                </Text>
-                            </StyledPressable>
-                        )}
-                        <StyledPressable className='bg-red-500 px-4 py-2 rounded active:bg-red-600 mt-3' onPress={() => setModalVisible(false)}>
-                            <Text className="text-white">
-                                Cancelar
-                            </Text>
-                        </StyledPressable>
+                        </View>
                     </View>
                 </Modal>
             )}
@@ -216,20 +221,26 @@ const styles = StyleSheet.create({
         color: 'white',
         textAlign: 'center',
     },
+    modalBackground: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    },
     modalView: {
         margin: 20,
-        backgroundColor: "white",
+        backgroundColor: 'white',
         borderRadius: 20,
         padding: 35,
-        alignItems: "center",
-        shadowColor: "#000",
+        alignItems: 'center',
+        shadowColor: '#000',
         shadowOffset: {
             width: 0,
-            height: 2
+            height: 2,
         },
         shadowOpacity: 0.25,
         shadowRadius: 4,
-        elevation: 5
+        elevation: 5,
     },
     modalText: {
         marginBottom: 15,

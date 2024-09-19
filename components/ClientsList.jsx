@@ -31,7 +31,7 @@ export default function ClientsList() {
         };
 
         fetchProducts();
-    }, []);
+    }, [clientes]);
 
     const handleSearch = (text) => {
         setSearch(text);
@@ -42,7 +42,7 @@ export default function ClientsList() {
     };
 
     const handleEdit = (clienteId) => {
-        router.push(`/cliente/${clienteId}`);
+        router.push(`/editClients/${clienteId}`);
     };
 
     if (loading) {
@@ -70,13 +70,13 @@ export default function ClientsList() {
                     headerRight: () => { }
                 }}
             />
-            <ScrollView>
-                <Text style={styles.title}>Listado de pedidos</Text>
+            <View className="mb-28">
+                <Text style={styles.title}>Listado de Clientes</Text>
                 <TextInput
                     style={styles.searchInput}
                     value={search}
                     onChangeText={handleSearch}
-                    placeholder="Buscar pedidos..."
+                    placeholder="Buscar cliente..."
                 />
                 <FlatList
                     data={filteredClientes}
@@ -102,7 +102,7 @@ export default function ClientsList() {
                         </View>
                     )}
                 />
-            </ScrollView>
+            </View>
         </Screen>
     )
 }

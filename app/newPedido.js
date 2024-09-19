@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, StyleSheet, Pressable, ActivityIndicator, TextInput } from 'react-native';
 import { getAllClients } from '../libs/supabase'; // Ajusta la ruta según la ubicación de tu archivo supabase.js
 import { Stack, useRouter } from 'expo-router';
 import { Screen } from '../components/Screen';
 
 export default function NewPedido() {
     const [clients, setClients] = useState([]);
+    const [filteredClientes, setFilteredClientes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [search, setSearch] = useState('');
     const router = useRouter();
 
     useEffect(() => {
@@ -15,6 +17,7 @@ export default function NewPedido() {
             try {
                 const data = await getAllClients();
                 setClients(data);
+                setFilteredClientes(data);
             } catch (error) {
                 setError(error.message);
             } finally {
@@ -28,6 +31,14 @@ export default function NewPedido() {
     const handleSelectClient = (clientId) => {
         console.log(clientId);
         router.push(`/order/${clientId}`);
+    };
+
+    const handleSearch = (text) => {
+        setSearch(text);
+        const filtered = clients.filter(cliente =>
+            cliente.name.includes(text)
+        );
+        setFilteredClientes(filtered);
     };
 
     if (loading) {
@@ -58,8 +69,14 @@ export default function NewPedido() {
             />
             <View style={styles.container}>
                 <Text style={styles.title}>Listado de Clientes</Text>
+                <TextInput
+                    style={styles.searchInput}
+                    value={search}
+                    onChangeText={handleSearch}
+                    placeholder="Buscar cliente..."
+                />
                 <FlatList
-                    data={clients}
+                    data={filteredClientes}
                     keyExtractor={(item) => item.id.toString()}
                     renderItem={({ item }) => (
                         <Pressable onPress={() => handleSelectClient(item.id)} style={styles.clientCard}>
@@ -77,6 +94,13 @@ const styles = StyleSheet.create({
         flex: 1,
         padding: 20,
         backgroundColor: '#fff',
+    },
+    searchInput: {
+        borderWidth: 1,
+        borderColor: '#ccc',
+        padding: 10,
+        borderRadius: 5,
+        marginBottom: 20,
     },
     title: {
         fontSize: 24,

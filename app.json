@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "app-pedidos",
+    "name": "Pedidos APP",
     "slug": "app-pedidos",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/logo_app.png",
     "userInterfaceStyle": "light",
     "scheme": "metacritic",
     "splash": {

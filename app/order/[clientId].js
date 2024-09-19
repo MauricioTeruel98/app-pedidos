@@ -11,6 +11,7 @@ export default function Order() {
     const [client, setClient] = useState(null);
     const [products, setProducts] = useState([]);
     const [quantities, setQuantities] = useState({});
+    const [prices, setPrices] = useState({});
     const [modalVisible, setModalVisible] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -25,6 +26,13 @@ export default function Order() {
 
                 const productsData = await getAllProducts();
                 setProducts(productsData);
+
+                // Inicializar precios con los datos obtenidos
+                const initialPrices = {};
+                productsData.forEach(product => {
+                    initialPrices[product.id] = product.price;
+                });
+                setPrices(initialPrices);
             } catch (error) {
                 setError(error.message);
             } finally {
@@ -36,10 +44,17 @@ export default function Order() {
     }, [clientId]);
 
     const handleQuantityChange = (productId, quantity) => {
-        setQuantities({
-            ...quantities,
-            [productId]: parseInt(quantity)
-        });
+        setQuantities(prevQuantities => ({
+            ...prevQuantities,
+            [productId]: quantity === '' ? '' : parseInt(quantity)
+        }));
+    };
+
+    const handlePriceChange = (productId, price) => {
+        setPrices(prevPrices => ({
+            ...prevPrices,
+            [productId]: price === '' ? '' : parseFloat(price)
+        }));
     };
 
     const handleConfirmOrder = async () => {
@@ -49,7 +64,7 @@ export default function Order() {
                 products: Object.keys(quantities).map(productId => ({
                     productId,
                     quantity: quantities[productId],
-                    price: products.find(product => parseInt(product.id) === parseInt(productId)).price
+                    price: prices[productId]
                 }))
             };
             await createOrder(orderData);
@@ -94,8 +109,18 @@ export default function Order() {
                     keyExtractor={(item) => item.id.toString()}
                     renderItem={({ item }) => (
                         <View style={styles.productCard}>
-                            <Text style={styles.productName}>{item.name}</Text>
-                            <Text style={styles.productPrice}>${item.price}</Text>
+                            <Text style={styles.productName} className="mb-3">{item.name}</Text>
+                            <View>
+                                <Text className="mb-2">Precio: </Text>
+                                <TextInput
+                                    style={styles.productPrice}
+                                    keyboardType="numeric"
+                                    placeholder="Precio"
+                                    value={prices[item.id]?.toString() || ''}
+                                    onChangeText={(text) => handlePriceChange(item.id, text)}
+                                />
+                            </View>
+
                             <TextInput
                                 style={styles.quantityInput}
                                 keyboardType="numeric"
@@ -116,21 +141,23 @@ export default function Order() {
                     visible={modalVisible}
                     onRequestClose={() => setModalVisible(false)}
                 >
-                    <View style={styles.modalView}>
-                        <Text style={styles.modalText}>¿Confirmar el pedido?</Text>
-                        <View style={styles.modalButtons}>
-                            <Pressable
-                                style={[styles.button, styles.buttonClose]}
-                                onPress={() => setModalVisible(false)}
-                            >
-                                <Text style={styles.textStyle}>No</Text>
-                            </Pressable>
-                            <Pressable
-                                style={[styles.button, styles.buttonConfirm]}
-                                onPress={handleConfirmOrder}
-                            >
-                                <Text style={styles.textStyle}>Sí</Text>
-                            </Pressable>
+                    <View style={styles.modalBackground}>
+                        <View style={styles.modalView}>
+                            <Text style={styles.modalText}>¿Confirmar el pedido?</Text>
+                            <View style={styles.modalButtons}>
+                                <Pressable
+                                    style={[styles.button, styles.buttonClose]}
+                                    onPress={() => setModalVisible(false)}
+                                >
+                                    <Text style={styles.textStyle}>No</Text>
+                                </Pressable>
+                                <Pressable
+                                    style={[styles.button, styles.buttonConfirm]}
+                                    onPress={handleConfirmOrder}
+                                >
+                                    <Text style={styles.textStyle}>Sí</Text>
+                                </Pressable>
+                            </View>
                         </View>
                     </View>
                 </Modal>
@@ -167,8 +194,13 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     productPrice: {
-        fontSize: 16,
+        borderWidth: 1,
+        borderColor: '#ccc',
+        padding: 10,
+        borderRadius: 5,
         marginBottom: 10,
+        width: '100%',
+        fontSize: 16,
     },
     quantityInput: {
         borderWidth: 1,
@@ -180,6 +212,12 @@ const styles = StyleSheet.create({
     buttonText: {
         color: 'white',
         textAlign: 'center',
+    },
+    modalBackground: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
     },
     modalView: {
         margin: 20,
@@ -206,9 +244,10 @@ const styles = StyleSheet.create({
         width: '100%',
     },
     button: {
-        borderRadius: 20,
+        borderRadius: 10,
         padding: 10,
         elevation: 2,
+        width: 70,
     },
     buttonClose: {
         backgroundColor: '#f44336',

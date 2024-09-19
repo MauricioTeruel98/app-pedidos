@@ -4,44 +4,46 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Screen } from '../../components/Screen';
 import { Stack } from 'expo-router';
 import { styled } from "nativewind";
-import { getProductById, updateProduct } from '../../libs/supabase'; // Ajusta la ruta según la ubicación de tu archivo supabase.js
+import { getClientById, getProductById, updateClient, updateProduct } from '../../libs/supabase'; // Ajusta la ruta según la ubicación de tu archivo supabase.js
 
 const StyledPressable = styled(Pressable);
 
-export default function EditProduct() {
-    const { productId } = useLocalSearchParams();
+export default function EditClient() {
+    const { clientId } = useLocalSearchParams();
     const router = useRouter();
-    const [product, setProduct] = useState(null);
+    const [client, setClient] = useState(null);
     const [name, setName] = useState('');
-    const [price, setPrice] = useState(0);
+    const [email, setEmail] = useState('');
+    const [telefono, setTelefono] = useState('');
 
     useEffect(() => {
-        const fetchProduct = async () => {
+        const fetchClient = async () => {
             try {
-                const data = await getProductById(productId);
-                setProduct(data);
+                const data = await getClientById(clientId);
+                console.log('Fetched client data:', data); // Verificar los datos obtenidos
+                setClient(data);
                 setName(data.name);
-                setPrice(data.price?.toString() || '');
+                setEmail(data.email);
+                setTelefono(data.telefono?.toString() || ''); // Convertir a cadena si es necesario
+                console.log('Telefono set to:', data.telefono?.toString()); // Verificar el valor de telefono
             } catch (error) {
-                console.error('Error fetching product:', error);
+                console.error('Error fetching client:', error);
             }
         };
 
-        fetchProduct();
-    }, [productId]);
-
-    console.log(price);
+        fetchClient();
+    }, [clientId]);
 
     const handleUpdate = async () => {
         try {
-            await updateProduct(productId, { name, price });
+            await updateClient(clientId, { name, email, telefono });
             router.back();
         } catch (error) {
-            console.error('Error updating product:', error);
+            console.error('Error updating client:', error);
         }
     };
 
-    if (!product) {
+    if (!client) {
         return (
             <Screen>
                 <ActivityIndicator color={'#ecbb20'} size={"large"} />
@@ -60,7 +62,7 @@ export default function EditProduct() {
                 }}
             />
             <View style={styles.container}>
-                <Text style={styles.title}>Editar Producto</Text>
+                <Text style={styles.title}>Editar Cliente</Text>
                 <TextInput
                     style={styles.input}
                     value={name}
@@ -69,13 +71,20 @@ export default function EditProduct() {
                 />
                 <TextInput
                     style={styles.input}
-                    value={price}
-                    onChangeText={setPrice}
+                    value={email}
+                    onChangeText={setEmail}
                     placeholder="Precio"
+                />
+                <TextInput
+                    style={styles.input}
+                    value={telefono}
+                    onChangeText={setTelefono}
+                    placeholder="Teléfono"
+                    keyboardType="numeric"
                 />
                 <StyledPressable onPress={handleUpdate} className="w-full flex-row justify-center items-center bg-yellow-500 rounded-xl py-3 active:bg-yellow-600">
                     <Text className="">
-                        Guardar Producto
+                        Guardar Cliente
                     </Text>
                 </StyledPressable>
             </View>

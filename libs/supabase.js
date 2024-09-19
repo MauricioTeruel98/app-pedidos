@@ -14,6 +14,47 @@ export async function getAllProducts() {
     return products;
 }
 
+export async function crearProducto({ name, price }) {
+    const { data, error } = await supabase
+        .from('products')
+        .insert([
+            {
+                name,
+                price
+            },
+        ])
+        .select();
+
+    if (error) {
+        throw error;
+    }
+    return data;
+}
+
+export async function getProductById(id) {
+    let { data: product, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', id)
+        .single();
+    if (error) {
+        throw error;
+    }
+
+    return product;
+}
+
+export async function updateProduct(id, { name, price }) {
+    const { data, error } = await supabase
+        .from('products')
+        .update({ name, price })
+        .eq('id', id);
+    if (error) {
+        throw error;
+    }
+    return data;
+}
+
 export async function getAllPedidos() {
     let { data: pedidos, error } = await supabase
         .from('pedidos')
@@ -56,6 +97,50 @@ export async function getProductsPedido(id) {
     return products;
 }
 
+export const createOrder = async (orderData) => {
+    const { clientId, products } = orderData;
+
+    const { data: order, error: orderError } = await supabase
+        .from('pedidos')
+        .insert([{ cliente_id: clientId, total: calculateTotal(products), status: 0 }])
+        .select(); // Cambiado para seleccionar el registro insertado
+
+    if (orderError) throw orderError;
+
+    if (!order || order.length === 0) {
+        throw new Error('La orden no se creó correctamente.');
+    }
+
+    const orderId = order[0].id; // Obtenemos el ID del primer elemento de la respuesta
+
+    const orderProducts = products.map(product => ({
+        pedido_id: orderId,
+        product_id: product.productId,
+        quantity: product.quantity,
+        price_unit: product.price,
+    }));
+
+    const { error: orderProductsError } = await supabase
+        .from('pedido_productos')
+        .insert(orderProducts);
+
+    if (orderProductsError) throw orderProductsError;
+
+    return order[0];
+};
+
+export async function updateStatusPedido(id, { status }) {
+    console.log(id, { status });
+    const { data, error } = await supabase
+        .from('pedidos')
+        .update({ status })
+        .eq('id', id);
+    if (error) {
+        throw error;
+    }
+    return data;
+}
+
 export async function crearCliente({ name, email, telefono }) {
     const { data, error } = await supabase
         .from('clients')
@@ -74,51 +159,11 @@ export async function crearCliente({ name, email, telefono }) {
     return data;
 }
 
-export async function crearProducto({ name, price }) {
-    const { data, error } = await supabase
-        .from('products')
-        .insert([
-            {
-                name,
-                price
-            },
-        ])
-        .select();
-
-    if (error) {
-        throw error;
-    }
-    return data;
-}
-
-export async function getProductById(id) {
-    let { data: product, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('id', id)
-        .single();
-    if (error) {
-        throw error;
-    }
-    
-    return product;
-}
-
-export async function updateProduct(id, { name, price }) {
-    const { data, error } = await supabase
-        .from('products')
-        .update({ name, price })
-        .eq('id', id);
-    if (error) {
-        throw error;
-    }
-    return data;
-}
-
 export const getAllClients = async () => {
     const { data, error } = await supabase
         .from('clients')
-        .select('*');
+        .select('*')
+        .order('created_at', { ascending: false });
     if (error) throw error;
     return data;
 };
@@ -133,40 +178,16 @@ export const getClientById = async (id) => {
     return data;
 };
 
-export const createOrder = async (orderData) => {
-    const { clientId, products } = orderData;
-
-    const { data: order, error: orderError } = await supabase
-        .from('pedidos')
-        .insert([{ cliente_id: clientId, total: calculateTotal(products) }])
-        .select(); // Cambiado para seleccionar el registro insertado
-
-    if (orderError) throw orderError;
-
-    if (!order || order.length === 0) {
-        throw new Error('La orden no se creó correctamente.');
+export async function updateClient(id, { name, email, telefono }) {
+    const { data, error } = await supabase
+        .from('clients')
+        .update({ name, email, telefono })
+        .eq('id', id);
+    if (error) {
+        throw error;
     }
-
-    const orderId = order[0].id; // Obtenemos el ID del primer elemento de la respuesta
-
-    const orderProducts = products.map(product => ({
-        pedido_id: orderId,
-        product_id: product.productId,
-        quantity: product.quantity,
-        price_unit: product.price,
-        status: 0
-    }));
-
-    const { error: orderProductsError } = await supabase
-        .from('pedido_productos')
-        .insert(orderProducts);
-
-    if (orderProductsError) throw orderProductsError;
-
-    return order[0];
-};
-
-
+    return data;
+}
 
 const calculateTotal = (products, quantity) => {
     return products.reduce((total, product) => total + product.price * product.quantity, 0);
